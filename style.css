@@ -1,0 +1,122 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f7;
+  color: #1a1a1a;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+header { text-align: center; margin-bottom: 24px; }
+h1 { font-size: 28px; margin-bottom: 4px; }
+.subtitle { color: #666; font-size: 14px; }
+h2 { font-size: 20px; margin-bottom: 12px; }
+
+.input-block {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.input-row { display: flex; gap: 8px; }
+
+#productInput {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+}
+#productInput:focus { border-color: #4a90e2; }
+
+button {
+  padding: 10px 18px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button:hover { background: #3a7bc8; }
+
+.products-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.product-chip {
+  background: #e8f0fe;
+  color: #1a56b8;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.product-chip .remove {
+  cursor: pointer;
+  opacity: 0.6;
+  font-weight: bold;
+}
+.product-chip .remove:hover { opacity: 1; }
+
+.clear-btn {
+  background: transparent;
+  color: #999;
+  font-size: 13px;
+  margin-top: 10px;
+  padding: 4px 0;
+}
+.clear-btn:hover { background: transparent; color: #c00; }
+
+.results-block h2 { margin-bottom: 12px; }
+
+.recipe-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.recipe-card.ready { border-left: 4px solid #2ecc71; }
+.recipe-card.almost { border-left: 4px solid #f39c12; }
+.recipe-card.missing { border-left: 4px solid #e74c3c; opacity: 0.9; }
+
+.recipe-card h3 { font-size: 17px; margin-bottom: 6px; }
+.recipe-meta { font-size: 13px; color: #666; margin-bottom: 10px; }
+
+.recipe-status { font-size: 14px; margin-bottom: 8px; }
+.recipe-status.ok { color: #2ecc71; font-weight: 600; }
+.recipe-status.warn { color: #f39c12; font-weight: 600; }
+.recipe-status.no { color: #e74c3c; font-weight: 600; }
+
+.ingredients-list { font-size: 13px; color: #555; }
+.ingredients-list .have { color: #2ecc71; }
+.ingredients-list .miss { color: #e74c3c; }
+.ingredients-list .pantry { color: #999; }
+
+.steps {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #444;
+  padding-left: 20px;
+}
+.steps li { margin-bottom: 4px; }
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 30px 10px;
+  font-size: 15px;
+}
