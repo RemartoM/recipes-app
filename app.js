@@ -1,7 +1,14 @@
 const App = {
+  // Продукты, которые ввёл пользователь.
+  // Загружаются из Storage при init, сохраняются при изменении.
   products: [],
 
+  // Ссылки на DOM-элементы. Заполняются в init.
   els: {},
+
+  // ──────────────────────────────────────────────────────────
+  // ИНИЦИАЛИЗАЦИЯ
+  // ──────────────────────────────────────────────────────────
 
   init() {
     this.els = {
@@ -12,24 +19,35 @@ const App = {
       results: document.getElementById('results')
     };
 
+    // Загружаем ранее сохранённые продукты.
+    // Если ничего нет — вернётся пустой массив.
     this.products = Storage.get('products', []);
 
     this.els.addBtn.addEventListener('click', () => this.addProduct());
+
     this.els.input.addEventListener('keydown', e => {
       if (e.key === 'Enter') this.addProduct();
     });
+
     this.els.clearBtn.addEventListener('click', () => this.clearAll());
 
     this.render();
   },
 
+  // ──────────────────────────────────────────────────────────
+  // РАБОТА С ПРОДУКТАМИ
+  // ──────────────────────────────────────────────────────────
+
   addProduct() {
     const value = this.els.input.value.trim();
     if (!value) return;
 
+    // Проверяем дубликат через normalize —
+    // чтобы "Курица" и "курица" считались одним продуктом.
     const exists = this.products.some(
       p => Matcher.normalize(p) === Matcher.normalize(value)
     );
+
     if (!exists) {
       this.products.push(value);
       Storage.set('products', this.products);
@@ -48,18 +66,25 @@ const App = {
 
   clearAll() {
     if (!confirm('Удалить все продукты?')) return;
+
     this.products = [];
     Storage.set('products', this.products);
     this.render();
   },
+
+  // ──────────────────────────────────────────────────────────
+  // РЕНДЕР
+  // ──────────────────────────────────────────────────────────
 
   render() {
     this.renderProducts();
     this.renderResults();
   },
 
+  // Отрисовка "чипов" с продуктами под полем ввода
   renderProducts() {
     const el = this.els.productsList;
+
     if (!this.products.length) {
       el.innerHTML = '';
       return;
@@ -72,6 +97,7 @@ const App = {
       </span>
     `).join('');
 
+    // Обработчики навешиваем ПОСЛЕ вставки HTML — иначе элементов ещё нет
     el.querySelectorAll('.remove').forEach(btn => {
       btn.addEventListener('click', e => {
         this.removeProduct(e.target.dataset.name);
@@ -79,6 +105,7 @@ const App = {
     });
   },
 
+  // Отрисовка списка рецептов
   renderResults() {
     const el = this.els.results;
 
@@ -89,26 +116,33 @@ const App = {
 
     const matches = Matcher.match(RECIPES, this.products);
 
-    // Показываем: всё есть (0 missing), не хватает 1,
-    // или не хватает 2 но совпадений много
+    // Показываем рецепты:
+    // - где всё есть (missingCount === 0), ИЛИ
+    // - где совпало минимум 2 ингредиента
+    //
+    // Так при небольшом наборе продуктов видим больше кандидатов,
+    // но отсекаем мусор, где совпал только 1 продукт.
     const useful = matches.filter(m =>
-      m.missingCount <= 1 ||
-      (m.missingCount === 2 && m.haveCount >= 2)
+      m.missingCount === 0 || m.haveCount >= 2
     );
 
     if (!useful.length) {
-      el.innerHTML = '<div class="empty">Ничего подходящего. Попробуй добавить ещё продуктов.</div>';
+      el.innerHTML = '<div class="empty">Мало совпадений. Попробуй добавить ещё продуктов.</div>';
       return;
     }
 
     el.innerHTML = useful.map(m => this.renderRecipe(m)).join('');
   },
 
+  // Рендер одной карточки рецепта.
+  // m — объект из Matcher.match: { recipe, have, missing, pantry, missingCount, haveCount, ... }
   renderRecipe(m) {
     const { recipe, have, missingCount } = m;
 
+    // ── Класс и текст статуса ─────────────────────────────
     let cls = 'ready';
     let status = '✅ Все ингредиенты есть';
+
     if (missingCount === 1) {
       cls = 'almost';
       status = '⚠️ Не хватает 1 ингредиента';
@@ -117,26 +151,43 @@ const App = {
       status = `⚠️ Не хватает ${missingCount} ингредиентов`;
     }
 
+    // ── Ингредиенты ──────────────────────────────────────
+    // Для каждого ингредиента определяем: есть / базовый / нет
     const ingHtml = recipe.ingredients.map(ing => {
       const norm = Matcher.normalize(ing.name);
       const isPantry = Matcher.PANTRY.has(norm);
-      const hasIt = have.some(h => Matcher.isSameIngredient(h.name, ing.name));
 
-      let ingCls, mark;
-      if (hasIt) {
-        ingCls = 'have'; mark = '✓';
+      // Ищем в have. Там лежат объекты с полем matchedWith —
+      // то, ЧЕМ пользователь закрыл ингредиент.
+      const matched = have.find(h => Matcher.isSameIngredient(h.name, ing.name));
+
+      let ingCls, mark, suffix = '';
+
+      if (matched) {
+        ingCls = 'have';
+        mark = '✓';
+
+        // Если пользователь ввёл синоним, отличающийся от имени в рецепте —
+        // показываем подсказку "(у тебя: макароны)".
+        if (Matcher.normalize(matched.matchedWith) !== norm) {
+          suffix = ` <span class="matched-with">(у тебя: ${this.escape(matched.matchedWith)})</span>`;
+        }
       } else if (isPantry) {
-        ingCls = 'pantry'; mark = '·';
+        ingCls = 'pantry';
+        mark = '·';
       } else {
-        ingCls = 'miss'; mark = '✗';
+        ingCls = 'miss';
+        mark = '✗';
       }
 
       const amount = ing.amount ? ` — ${ing.amount} ${ing.unit}` : '';
-      return `<div class="${ingCls}">${mark} ${this.escape(ing.name)}${amount}</div>`;
+      return `<div class="${ingCls}">${mark} ${this.escape(ing.name)}${amount}${suffix}</div>`;
     }).join('');
 
+    // ── Шаги приготовления ──────────────────────────────
     const stepsHtml = recipe.steps.map(s => `<li>${this.escape(s)}</li>`).join('');
 
+    // ── Финальная разметка карточки ─────────────────────
     return `
       <div class="recipe-card ${cls}">
         <h3>${this.escape(recipe.title)}</h3>
@@ -150,6 +201,11 @@ const App = {
     `;
   },
 
+  // ──────────────────────────────────────────────────────────
+  // УТИЛИТЫ
+  // ──────────────────────────────────────────────────────────
+
+  // Защита от XSS: экранируем опасные символы перед вставкой в HTML
   escape(str) {
     return String(str)
       .replace(/&/g, '&amp;')

@@ -120,3 +120,8 @@ button:hover { background: #3a7bc8; }
   padding: 30px 10px;
   font-size: 15px;
 }
+.ingredients-list .matched-with {
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+}
